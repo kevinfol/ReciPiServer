@@ -1,0 +1,33 @@
+{
+  "name": "recipi-app",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www",
+    "tailwind:css": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css",
+    "serve": "npm run tailwind:css && npm run start",
+    "tailwind:css-cont": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css -w",
+    "serve-cont": "nodemon ./bin/www",
+    "dev": "concurrently \"npm run serve-cont\" \"npm run tailwind:css-cont\""
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "autoprefixer": "^10.4.22",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "http-errors": "~1.6.3",
+    "jsdom": "^27.0.1",
+    "morgan": "^1.10.1",
+    "nanoid": "^5.1.6",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "pug": "^2.0.4",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11"
+  }
+}
