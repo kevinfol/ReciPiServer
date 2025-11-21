@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * Script Name: database_operations.js
@@ -6,9 +6,9 @@
  *  Contains functions for interacting with the database.
  */
 
-const nanoid = require('nanoid');
-const fs = require('fs');
-const dbFile = 'recipe_db.json';
+const nanoid = require("nanoid");
+const fs = require("fs");
+const dbFile = "./database/recipe_db.json";
 
 /**
  * Reads the recipes object from the JSON file on the filesystem.
@@ -17,9 +17,10 @@ const dbFile = 'recipe_db.json';
  */
 function readRecipeDB() {
   try {
-    const recipes = fs.readFileSync(dbFile, 'utf8');
-    return recipes;
+    const recipes = fs.readFileSync(dbFile, "utf8");
+    return JSON.parse(recipes);
   } catch (error) {
+    console.log(error);
     throw error;
   }
 }
@@ -31,23 +32,25 @@ function readRecipeDB() {
  * @param {Object} recipes
  */
 function writeRecipeDB(recipes) {
-  fs.writeFile(dbFile, JSON.stringify(recipes), (error) => {
-    if (error) throw error;
-    console.log('Successfully wrote database.');
-  });
+  fs.writeFileSync(dbFile, JSON.stringify(recipes));
+  console.log("Successfully wrote database.");
+}
+
+function getRecipes() {
+  return readRecipeDB();
 }
 
 /** Clears the entire recipe database and writes an empty DB to the
  * filesystem.
  */
 function clearAllRecipes() {
-  writeRecipeDB({});
+  writeRecipeDB([]);
 }
 
 function backupDatabase() {
-  fs.copyFile(dbFile, 'bak_' + dbFile, (error) => {
+  fs.copyFile(dbFile, "bak_" + dbFile, (error) => {
     if (error) throw error;
-    console.log('Backed up database.');
+    console.log("Backed up database.");
   });
 }
 
@@ -58,7 +61,7 @@ function backupDatabase() {
  */
 function getRecipeCount() {
   const recipes = readRecipeDB();
-  return Object.keys(recipes).length;
+  return recipes.length;
 }
 
 /**
@@ -68,7 +71,7 @@ function getRecipeCount() {
  */
 function getRecipeKeys() {
   const recipes = readRecipeDB();
-  return Object.keys(recipes);
+  return recipes.map((r) => r.key);
 }
 
 /**
@@ -80,10 +83,8 @@ function getRecipeKeys() {
  */
 function getRecipe(recipe_key) {
   const recipes = readRecipeDB();
-  if (Object.keys(recipes).includes(recipe_key)) {
-    return recipes[recipe_key];
-  }
-  return undefined;
+  const recipe = recipes.find((r) => r.key == recipe_key);
+  return recipe;
 }
 
 /**
@@ -93,8 +94,9 @@ function getRecipe(recipe_key) {
  */
 function deleteRecipe(recipe_key) {
   const recipes = readRecipeDB();
-  if (Object.keys(recipes).includes(recipe_key)) {
-    delete recipes[recipe_key];
+  const index = recipes.findIndex((r) => r.key == recipe_key);
+  if (index >= 0) {
+    recipes.splice(index, 1);
     writeRecipeDB(recipes);
   }
 }
@@ -106,16 +108,15 @@ function deleteRecipe(recipe_key) {
  */
 function addRecipe(recipe) {
   const recipes = readRecipeDB();
-  const recipe_key = nanoid.nanoid();
-  if (!Object.keys(recipes).includes(recipe_key)) {
-    recipes[recipe_key] = recipe;
-    writeRecipeDB(recipes);
-  } else {
-    throw Error(`Recipe with key: ${recipe_key} already exists. Not adding.`);
-  }
+  recipe.key = nanoid.nanoid();
+  recipe.added_ts = new Date();
+  recipes.push(recipe);
+  writeRecipeDB(recipes);
+  return recipe.key;
 }
 
 module.exports = {
+  getRecipes,
   getRecipeCount,
   getRecipe,
   getRecipeKeys,

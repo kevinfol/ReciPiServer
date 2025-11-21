@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * Script Name: parse_recipe.js
@@ -7,7 +7,7 @@
  *  provided URL
  */
 
-const jsdom = require('jsdom');
+const jsdom = require("jsdom");
 
 /**
  * Tests a provided 'urlString' for validity.
@@ -21,7 +21,7 @@ const jsdom = require('jsdom');
 function isURLValid(urlString) {
   try {
     const url = new URL(urlString);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch (error) {
     return false;
   }
@@ -41,7 +41,7 @@ async function getDOMFromURL(url) {
     const html = await response.text();
     const dom = new jsdom.JSDOM(html, {
       url: url,
-      contentType: 'text/html',
+      contentType: "text/html",
     });
     return dom;
   }
@@ -61,19 +61,22 @@ function isJSONRecipe(jsonObj) {
 }
 
 function isAllRecipesRecipe(jsonObj) {
+  let recipeJ = jsonObj;
   if (Array.isArray(jsonObj)) {
-    if ((typeof jsonObj[0] === 'object') & !Array.isArray(jsonObj[0])) {
-      if (Object.keys(jsonObj).includes('recipeInstructions')) {
-        return true;
-      }
+    recipeJ = jsonObj[0];
+  }
+  if ((typeof recipeJ === "object") & !Array.isArray(recipeJ)) {
+    if (Object.keys(recipeJ).includes("recipeInstructions")) {
+      return true;
     }
   }
+
   return false;
 }
 
 function isNormalStyleRecipe(jsonObj) {
-  if (Object.keys(jsonObj).includes('@graph')) {
-    if (jsonObj['@graph'].find((g) => g?.['@type'] === 'Recipe')) {
+  if (Object.keys(jsonObj).includes("@graph")) {
+    if (jsonObj["@graph"].find((g) => g?.["@type"] === "Recipe")) {
       return true;
     }
   }
@@ -91,7 +94,7 @@ function isNormalStyleRecipe(jsonObj) {
  */
 function parseYield(yeildObject) {
   if (Array.isArray(yeildObject)) {
-    const descriptiveYield = yeildObject.find((y) => y.trim().includes(' '));
+    const descriptiveYield = yeildObject.find((y) => y.trim().includes(" "));
     return descriptiveYield ? descriptiveYield : yeildObject[0];
   } else {
     return yeildObject;
@@ -108,21 +111,21 @@ function parseYield(yeildObject) {
 function parseRecipeInstructions(instructionsObj) {
   const instructions = [];
   for (const instruction of instructionsObj) {
-    if (instruction['@type'] === 'HowToStep') {
+    if (instruction["@type"] === "HowToStep") {
       instructions.push({
-        '@type': instruction['@type'],
-        text: instruction['text'],
+        "@type": instruction["@type"],
+        text: instruction["text"],
       });
-    } else if (instruction['@type'] === 'HowToSection') {
+    } else if (instruction["@type"] === "HowToSection") {
       const section = {
-        '@type': instruction['@type'],
-        name: instruction?.['name'] || instructions.length,
+        "@type": instruction["@type"],
+        name: instruction?.["name"] || instructions.length,
         itemListElement: [],
       };
       for (const subInstruction of instruction.itemListElement) {
-        section['itemListElement'].push({
-          '@type': subInstruction['@type'],
-          text: subInstruction['text'],
+        section["itemListElement"].push({
+          "@type": subInstruction["@type"],
+          text: subInstruction["text"],
         });
       }
       instructions.push(section);
@@ -135,11 +138,13 @@ function parseRecipeInstructions(instructionsObj) {
 
 function parseRecipeImage(obj) {
   if (Array.isArray(obj)) {
-    if (typeof obj[0] === 'string') {
+    if (typeof obj[0] === "string") {
       return obj[0];
     }
-  } else if (typeof obj === 'string') {
+  } else if (typeof obj === "string") {
     return obj;
+  } else if (typeof obj === "object" && Object.keys(obj).includes("url")) {
+    return obj.url;
   } else {
     return undefined;
   }
@@ -152,28 +157,32 @@ function parseRecipeImage(obj) {
  * @returns {Object} - ReciPi formatted recipe.
  */
 function parseAllRecipesFormat(jsonObj) {
+  let recipeJ = jsonObj;
+  if (Array.isArray(recipeJ)) {
+    recipeJ = recipeJ[0];
+  }
   const recipe = {
-    name: jsonObj[0]?.name,
-    description: jsonObj[0]?.description,
-    source: jsonObj[0]?.publisher?.name || jsonObj[0]?.publisher?.brand,
-    imageUrl: jsonObj[0]?.image?.url,
-    prepTime: jsonObj[0]?.prepTime,
-    cookTime: jsonObj[0]?.cookTime,
-    totalTime: jsonObj[0]?.totalTime,
-    recipeYield: parseYield(jsonObj[0]?.recipeYield),
-    recipeCuisine: jsonObj[0]?.recipeCuisine,
-    recipeCategory: jsonObj[0]?.recipeCategory,
-    recipeIngredient: jsonObj[0]?.recipeIngredient,
-    recipeInstructions: parseRecipeInstructions(jsonObj[0]?.recipeInstructions),
+    name: recipeJ?.name,
+    description: recipeJ?.description,
+    source: recipeJ?.publisher?.name || recipeJ?.publisher?.brand,
+    imageUrl: parseRecipeImage(recipeJ?.image),
+    prepTime: recipeJ?.prepTime,
+    cookTime: recipeJ?.cookTime,
+    totalTime: recipeJ?.totalTime,
+    recipeYield: parseYield(recipeJ?.recipeYield),
+    recipeCuisine: recipeJ?.recipeCuisine,
+    recipeCategory: recipeJ?.recipeCategory,
+    recipeIngredient: recipeJ?.recipeIngredient,
+    recipeInstructions: parseRecipeInstructions(recipeJ?.recipeInstructions),
   };
   return recipe;
 }
 
 function parseNormalRecipeFormat(jsonObj) {
-  const recipeObj = jsonObj['@graph'].find((g) => g['@type'] === 'Recipe');
-  const orgObj = jsonObj['@graph'].find((g) => g['@type'] === 'Organization');
-  const imgObj = jsonObj['@graph'].find((g) => g['@type'] === 'ImageObject');
-  const websiteObj = jsonObj['@graph'].find((g) => g['@type'] === 'WebSite');
+  const recipeObj = jsonObj["@graph"].find((g) => g["@type"] === "Recipe");
+  const orgObj = jsonObj["@graph"].find((g) => g["@type"] === "Organization");
+  const imgObj = jsonObj["@graph"].find((g) => g["@type"] === "ImageObject");
+  const websiteObj = jsonObj["@graph"].find((g) => g["@type"] === "WebSite");
   const recipe = {
     name: recipeObj?.name,
     description: recipeObj?.description,
@@ -198,7 +207,9 @@ function parseNormalRecipeFormat(jsonObj) {
  * @returns {Array} - Array where each element is a possible recipe JSON
  */
 function getLDJSONs(dom) {
-  const ldJSONScripts = dom.window.document.querySelectorAll(`script[type="application/ld+json"]`);
+  const ldJSONScripts = dom.window.document.querySelectorAll(
+    `script[type="application/ld+json"]`
+  );
   return Array.from(ldJSONScripts).map((s) => JSON.parse(s.innerHTML));
 }
 
@@ -221,7 +232,7 @@ async function createRecipeFromURL(recipeURL) {
       if (recipeJson) {
         // theoretically, the first item here is a recipe.
         // try to parse it.
-        recipe = isAllRecipesRecipe(recipeJson)
+        const recipe = isAllRecipesRecipe(recipeJson)
           ? parseAllRecipesFormat(recipeJson)
           : parseNormalRecipeFormat(recipeJson);
         return recipe;
