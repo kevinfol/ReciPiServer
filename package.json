@@ -8,7 +8,8 @@
     "serve": "npm run tailwind:css && npm run start",
     "tailwind:css-cont": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css -w",
     "serve-cont": "nodemon ./bin/www",
-    "dev": "concurrently \"npm run serve-cont\" \"npm run tailwind:css-cont\""
+    "dev": "concurrently \"npm run serve-cont\" \"npm run tailwind:css-cont\"",
+    "production": "NODE_ENV=production node ./bin/www"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.17",
